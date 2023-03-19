@@ -1,12 +1,56 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 import calendar
 from calendar import HTMLCalendar
 from datetime import datetime
 from django.http import HttpResponseRedirect
 from .models import Events, Venue
-from .forms import VenueForm
+from .forms import VenueForm, EventForm
 
 # Create your views here.
+
+def add_event(request):
+	"""
+
+	The return HttpResponseRedirect('/add_event?submitted=True') statement will redirect the user to the same page
+	with the GET parameter submitted=True appended to the URL. The URL /add_event?submitted=True is the URL
+	of the same view that was just executed, but with the submitted parameter set to True.
+
+	This is a common pattern in web development where after a form submission, instead of rendering a template directly,
+	the view redirects the user to another page, in this case, the same page with a success message.
+	This helps prevent accidental resubmissions of the form when the user refreshes the page or navigates back and
+	forth in their browser history.
+
+	"""
+	submitted = False
+	if request.method == 'POST':
+		form = EventForm(request.POST)
+		# request.POST is whatever they posted
+		if form.is_valid():
+			# If form is written correctly - we want to save it to the database
+			form.save()
+			return HttpResponseRedirect('/add_event?submitted=True')
+	else:
+		form = EventForm
+		if 'submitted' in request.GET:
+			# We check if ('/add_venue?submitted=True') will be in GET request
+			submitted = True
+	return render(request, 'events/add_event.html', {
+		'form': form,
+		'submitted': submitted,
+	})
+
+def update_venue(request, venue_id):
+	venue = Venue.objects.get(id=venue_id)
+	form = VenueForm(request.POST or None, instance=venue)  # If you are going to post - use this form, otherwise do nothing
+	#  instance is what we are going to put in the form
+	#  if I do not put None - the form will be empty
+	if form.is_valid():
+		form.save()
+		return redirect('list-venues')
+	return render(request, 'events/update_venue.html', {
+		'venue': venue,
+		'form': form,
+})
 
 def search_venues(request):
 	if request.method == 'POST':
