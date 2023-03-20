@@ -26,8 +26,9 @@
           Dropdown
         </a>
         <div class="dropdown-menu" aria-labelledby="navbarDropdown">
-          <a class="dropdown-item" href="#">Action</a>
-          <a class="dropdown-item" href="#">Another action</a>
+          <a class="dropdown-item" href="{% url 'venue-text' %}">Venue Text File</a>
+          <a class="dropdown-item" href="{% url 'venue-csv' %}">Venue CSV File</a>
+          <a class="dropdown-item" href="{% url 'venue-pdf' %}">Venue PDF File</a>
           <div class="dropdown-divider"></div>
           <a class="dropdown-item" href="#">Something else here</a>
         </div>

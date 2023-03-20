@@ -24,6 +24,10 @@
                     </p>
 <!--                <a href="#" class="btn btn-primary">Go somewhere</a>-->
               </div>
+              <div class="card-footer text-muted">
+                    <a href="{% url 'update-event' event.id %}" class="btn btn-outline-secondary btn-sm">Update</a>
+                    <a href="{% url 'delete-event' event.id %}" class="btn btn-outline-danger btn-sm">Delete</a>
+              </div>
         </div>
 
             <br><br>
