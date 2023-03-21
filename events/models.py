@@ -9,6 +9,7 @@ class Venue(models.Model):
     phone = models.CharField('Contact Phone', max_length=25, blank=True)
     web = models.URLField('Website Address', blank=True)
     email_address = models.EmailField('Email address', blank=True)
+    owner = models.IntegerField('Venue Owner', blank=False, default=1)  # blank=False - can't be empty
 
     def __str__(self):
         return self.name
@@ -28,6 +29,7 @@ class Events(models.Model):
     venue = models.ForeignKey(Venue, blank=True, null=True, on_delete=models.CASCADE)
     # Deleting venue (AREA 41) deletes Event: Alien Party
     manager = models.ForeignKey(User, blank=True, null=True, on_delete=models.SET_NULL)
+    #  User IS NOT and has NOTHING TO DO with MyClubUser !!!
     # If a manager deletes his profile - what happens to all that events? SET_NULL - in this case we set the manager
     # field to NULL
     description = models.TextField(blank=True)

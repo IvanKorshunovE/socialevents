@@ -28,7 +28,8 @@ class VenueForm(ModelForm):
         }
 
 
-class EventForm(ModelForm):
+# Admin Superuser Event Form
+class EventFormAdmin(ModelForm):
     class Meta:
         model = Events
         fields = ('name', 'event_date', 'venue', 'manager', 'attendees', 'description')
@@ -47,6 +48,30 @@ class EventForm(ModelForm):
             'event_date': 'YYYY-MM-DD HH:MM:SS',
             'venue': 'Venue',
             'manager': 'Manager',
+            'attendees': 'Attendees',
+            'description': '',
+        }
+
+
+# User event form (without selecting manager)
+class EventForm(ModelForm):
+    # We took out the manager label but the manager field is still in database.
+    class Meta:
+        model = Events
+        fields = ('name', 'event_date', 'venue', 'attendees', 'description')
+
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Event Name'}),
+            'event_date': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Event Date'}),
+            'venue': forms.Select(attrs={'class': 'form-control', 'placeholder': 'Venue'}),
+            'attendees': forms.SelectMultiple(attrs={'class': 'form-control', 'placeholder': 'Attendees'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'placeholder': 'Description'}),
+        }
+
+        labels = {
+            'name': '',
+            'event_date': 'YYYY-MM-DD HH:MM:SS',
+            'venue': 'Venue',
             'attendees': 'Attendees',
             'description': '',
         }

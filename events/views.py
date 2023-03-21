@@ -4,7 +4,7 @@ from calendar import HTMLCalendar
 from datetime import datetime
 from django.http import HttpResponseRedirect
 from .models import Events, Venue
-from .forms import VenueForm, EventForm
+from .forms import VenueForm, EventForm, EventFormAdmin
 from django.http import HttpResponse
 import csv
 
@@ -59,6 +59,7 @@ def venue_pdf(request):
 
     return FileResponse(buf, as_attachment=True, filename='Venue.pdf')
 
+
 def venue_csv(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=venues.csv'
@@ -112,12 +113,16 @@ def delete_event(request, event_id):
 
 def update_event(request, event_id):
     event = Events.objects.get(id=event_id)
-    form = EventForm(request.POST or None, instance=event)  # If you are going to post - use this form,
+    if request.user.is_superuser:
+        form = EventFormAdmin(request.POST or None, instance=event)
+    else:
+        form = EventForm(request.POST or None, instance=event)  # If you are going to post - use this form,
     # otherwise do nothing
     #  instance is what we are going to put in the form
     #  if I do not put None - the form will be empty
     if form.is_valid():
         form.save()
+        # Here we do not need to pass manager since we already saved it
         return redirect('list-events')
     return render(request, 'events/update_event.html', {
         'event': event,
@@ -127,7 +132,6 @@ def update_event(request, event_id):
 
 def add_event(request):
     """
-
 	The return HttpResponseRedirect('/add_event?submitted=True') statement will redirect the user to the same page
 	with the GET parameter submitted=True appended to the URL. The URL /add_event?submitted=True is the URL
 	of the same view that was just executed, but with the submitted parameter set to True.
@@ -136,18 +140,32 @@ def add_event(request):
 	the view redirects the user to another page, in this case, the same page with a success message.
 	This helps prevent accidental resubmissions of the form when the user refreshes the page or navigates back and
 	forth in their browser history.
-
 	"""
+
     submitted = False
     if request.method == 'POST':
-        form = EventForm(request.POST)
-        # request.POST is whatever they posted
-        if form.is_valid():
-            # If form is written correctly - we want to save it to the database
-            form.save()
-            return HttpResponseRedirect('/add_event?submitted=True')
+        if request.user.is_superuser:  # if request.user.id == 4:
+            form = EventFormAdmin(request.POST)
+            if form.is_valid():
+                form.save()
+                return HttpResponseRedirect('/add_event?submitted=True')
+        else:
+            form = EventForm(request.POST)
+            # request.POST is whatever they posted
+            if form.is_valid():
+                event = form.save(commit=False)
+                event.manager = request.user
+                event.save()
+                # If form is written correctly - we want to save it to the database
+                # form.save()
+                return HttpResponseRedirect('/add_event?submitted=True')
+
     else:
-        form = EventForm
+        # Just going to the page, Not submitting
+        if request.user.is_superuser:
+            form = EventFormAdmin
+        else:
+            form = EventForm
         if 'submitted' in request.GET:
             # We check if ('/add_venue?submitted=True') will be in GET request
             submitted = True
@@ -212,7 +230,9 @@ def add_venue(request):
         # request.POST is whatever they posted
         if form.is_valid():
             # If form is written correctly - we want to save it to the database
-            form.save()
+            venue = form.save(commit=False)  # We say 'hey, save it, but just do not save it jet'.
+            venue.owner = request.user.id
+            venue.save()
             return HttpResponseRedirect('/add_venue?submitted=True')
     else:
         form = VenueForm
