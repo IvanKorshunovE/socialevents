@@ -4,8 +4,11 @@ from calendar import HTMLCalendar
 from datetime import datetime
 from django.http import HttpResponseRedirect
 from .models import Events, Venue
+# import user model from django
+from django.contrib.auth.models import User
 from .forms import VenueForm, EventForm, EventFormAdmin
 from django.http import HttpResponse
+from django.contrib import messages
 import csv
 
 from django.http import FileResponse
@@ -19,6 +22,24 @@ from django.core.paginator import Paginator
 
 
 # Create your views here.
+def my_events(request):
+    """
+    Owner: IvanK (id = 1) I can edit 2 of that events because IvanK is logged user that is owner (Event.owner) - User
+    Attendee: IvanKorshunov (id=1) 3 events where attendee is IvanKorshunov - MyClubUser
+    """
+    if request.user.is_authenticated:
+        me = request.user.id
+        # atts = Events.objects.get(id=4).attendees.all()
+        events = Events.objects.filter(attendees=me)  # or attendees=request.user.id
+        return render(request, 'events/my_events.html', {
+            'events': events,
+            # "atts": atts,
+            'me': me,
+        })
+    else:
+        messages.success(request, 'You are not authorized')
+        return redirect('home')
+
 def venue_pdf(request):
     # Create Bytestream Buffer
     buf = io.BytesIO()
@@ -107,8 +128,13 @@ def delete_venue(request, venue_id):
 
 def delete_event(request, event_id):
     event = Events.objects.get(id=event_id)
-    event.delete()
-    return redirect('list-events')
+    if request.user == event.manager:
+        event.delete()
+        messages.success(request, 'Event deleted')
+        return redirect('list-events')
+    else:
+        messages.success(request, 'You are not authorized to delete this event')
+        return redirect('list-events')
 
 
 def update_event(request, event_id):
@@ -202,8 +228,12 @@ def search_venues(request):
 
 def show_venue(request, venue_id):
     venue = Venue.objects.get(id=venue_id)
+    # venue_owner = User.objects.get(pk=venue.owner)
+    venue_owner = User.objects.get(id=venue.owner)  # Grabs username of owner - but grabs the object itself
+    # (pk = primary key, == id - they are the same)
     return render(request, 'events/show_venue.html', {
-        'venue': venue
+        'venue': venue,
+        'venue_owner': venue_owner
     })
 
 
